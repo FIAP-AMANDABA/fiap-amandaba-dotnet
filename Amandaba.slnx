@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Amandaba.API/Amandaba.API.csproj" />
+  <Project Path="Amandaba.Tests/Amandaba.Tests.csproj" />
+</Solution>
