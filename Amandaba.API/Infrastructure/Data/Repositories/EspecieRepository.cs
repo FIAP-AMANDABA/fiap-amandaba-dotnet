@@ -1,5 +1,5 @@
-﻿using Amandaba.Domain.Entities;
-using Amandaba.Domain.Interfaces;
+﻿using Amandaba.API.Domain.Interfaces;
+using Amandaba.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Amandaba.Infrastructure.Data.Repositories

@@ -1,4 +1,5 @@
-﻿using Amandaba.Domain.Entities;
+﻿using Amandaba.API.Domain.Interfaces;
+using Amandaba.Domain.Entities;
 using Amandaba.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,7 +27,6 @@ namespace Amandaba.Infrastructure.Data.Repositories
         public PetEntity? ObterPorId(decimal idPet)
         {
             return _context.Pets
-                .AsNoTracking()
                 .Include(p => p.Especie)
                 .FirstOrDefault(p => p.IdPet == idPet);
         }
@@ -41,7 +41,6 @@ namespace Amandaba.Infrastructure.Data.Repositories
 
         public void Atualizar(PetEntity pet)
         {
-            _context.Pets.Update(pet);
             _context.SaveChanges();
         }
 

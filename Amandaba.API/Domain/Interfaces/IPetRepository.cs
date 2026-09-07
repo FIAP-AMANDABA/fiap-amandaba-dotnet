@@ -1,6 +1,6 @@
 ﻿using Amandaba.Domain.Entities;
 
-namespace Amandaba.Domain.Interfaces
+namespace Amandaba.API.Domain.Interfaces
 {
     public interface IPetRepository
     {

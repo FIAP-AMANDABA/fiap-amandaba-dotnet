@@ -37,7 +37,8 @@ namespace Amandaba.Infrastructure.Data
                 entity.HasKey(e => e.IdUsuario);
 
                 entity.Property(e => e.IdUsuario)
-                    .HasColumnName("ID_USUARIO");
+                    .HasColumnName("ID_USUARIO")
+                    .ValueGeneratedOnAdd();
 
                 entity.Property(e => e.Nome)
                     .HasColumnName("NM_USUARIO")
@@ -92,7 +93,8 @@ namespace Amandaba.Infrastructure.Data
                 entity.HasKey(e => e.IdTutor);
 
                 entity.Property(e => e.IdTutor)
-                    .HasColumnName("ID_TUTOR");
+                    .HasColumnName("ID_TUTOR")
+                    .ValueGeneratedOnAdd();
 
                 entity.Property(e => e.IdUsuario)
                     .HasColumnName("ID_USUARIO_TUTOR")
@@ -116,7 +118,8 @@ namespace Amandaba.Infrastructure.Data
                 entity.HasKey(e => e.IdEspecie);
 
                 entity.Property(e => e.IdEspecie)
-                    .HasColumnName("ID_ESPECIE");
+                    .HasColumnName("ID_ESPECIE")
+                    .ValueGeneratedOnAdd();
 
                 entity.Property(e => e.Nome)
                     .HasColumnName("NM_ESPECIE")
@@ -137,7 +140,8 @@ namespace Amandaba.Infrastructure.Data
                 entity.HasKey(e => e.IdPet);
 
                 entity.Property(e => e.IdPet)
-                    .HasColumnName("ID_PET");
+                    .HasColumnName("ID_PET")
+                    .ValueGeneratedOnAdd();
 
                 entity.Property(e => e.IdTutor)
                     .HasColumnName("ID_TUTOR_PET")
@@ -212,7 +216,8 @@ namespace Amandaba.Infrastructure.Data
                 entity.HasKey(e => e.IdHistoricoPeso);
 
                 entity.Property(e => e.IdHistoricoPeso)
-                    .HasColumnName("ID_HISTORICO_PESO");
+                    .HasColumnName("ID_HISTORICO_PESO")
+                    .ValueGeneratedOnAdd();
 
                 entity.Property(e => e.IdPet)
                     .HasColumnName("ID_PET_PESO")
@@ -246,7 +251,8 @@ namespace Amandaba.Infrastructure.Data
                 entity.HasKey(e => e.IdVacina);
 
                 entity.Property(e => e.IdVacina)
-                    .HasColumnName("ID_VACINA");
+                    .HasColumnName("ID_VACINA")
+                    .ValueGeneratedOnAdd();
 
                 entity.Property(e => e.Nome)
                     .HasColumnName("NM_VACINA")
@@ -276,7 +282,8 @@ namespace Amandaba.Infrastructure.Data
                 entity.HasKey(e => e.IdAplicacaoVacina);
 
                 entity.Property(e => e.IdAplicacaoVacina)
-                    .HasColumnName("ID_APLICACAO_VACINA");
+                    .HasColumnName("ID_APLICACAO_VACINA")
+                    .ValueGeneratedOnAdd();
 
                 entity.Property(e => e.IdPet)
                     .HasColumnName("ID_PET_VACINA")
@@ -335,7 +342,8 @@ namespace Amandaba.Infrastructure.Data
                 entity.HasKey(e => e.IdRegistroDoenca);
 
                 entity.Property(e => e.IdRegistroDoenca)
-                    .HasColumnName("ID_REGISTRO_DOENCA");
+                    .HasColumnName("ID_REGISTRO_DOENCA")
+                    .ValueGeneratedOnAdd();
 
                 entity.Property(e => e.IdPet)
                     .HasColumnName("ID_PET_DOENCA")
@@ -381,7 +389,8 @@ namespace Amandaba.Infrastructure.Data
                 entity.HasKey(e => e.IdRegistroAlergia);
 
                 entity.Property(e => e.IdRegistroAlergia)
-                    .HasColumnName("ID_REGISTRO_ALERGIA");
+                    .HasColumnName("ID_REGISTRO_ALERGIA")
+                    .ValueGeneratedOnAdd();
 
                 entity.Property(e => e.IdPet)
                     .HasColumnName("ID_PET_ALERGIA")
@@ -430,7 +439,8 @@ namespace Amandaba.Infrastructure.Data
                 entity.HasKey(e => e.IdRegistroMedicamento);
 
                 entity.Property(e => e.IdRegistroMedicamento)
-                    .HasColumnName("ID_REGISTRO_MEDICAMENTO");
+                    .HasColumnName("ID_REGISTRO_MEDICAMENTO")
+                    .ValueGeneratedOnAdd();
 
                 entity.Property(e => e.IdPet)
                     .HasColumnName("ID_PET_MEDICAMENTO")
@@ -508,7 +518,8 @@ namespace Amandaba.Infrastructure.Data
                 entity.HasKey(e => e.IdConsulta);
 
                 entity.Property(e => e.IdConsulta)
-                    .HasColumnName("ID_CONSULTA");
+                    .HasColumnName("ID_CONSULTA")
+                    .ValueGeneratedOnAdd();
 
                 entity.Property(e => e.IdPet)
                     .HasColumnName("ID_PET_CONSULTA")
@@ -590,7 +601,8 @@ namespace Amandaba.Infrastructure.Data
                 entity.HasKey(e => e.IdExame);
 
                 entity.Property(e => e.IdExame)
-                    .HasColumnName("ID_EXAME");
+                    .HasColumnName("ID_EXAME")
+                    .ValueGeneratedOnAdd();
 
                 entity.Property(e => e.IdPet)
                     .HasColumnName("ID_PET_EXAME")

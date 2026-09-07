@@ -1,7 +1,7 @@
-﻿using Amandaba.Application.Dtos.Pets;
+﻿using Amandaba.API.Domain.Interfaces;
+using Amandaba.Application.Dtos.Pets;
 using Amandaba.Application.Interfaces;
 using Amandaba.Application.Mappers;
-using Amandaba.Domain.Interfaces;
 
 namespace Amandaba.Application.UseCases
 {
