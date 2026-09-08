@@ -8,6 +8,8 @@ using Amandaba.Infrastructure.Data.Repositories;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 using Oracle.EntityFrameworkCore;
 using Serilog;
 using Serilog.Events;
@@ -22,7 +24,15 @@ Log.Logger = new LoggerConfiguration()
         LogEventLevel.Warning
     )
     .Enrich.FromLogContext()
-    .WriteTo.Console()
+    .WriteTo.Console(
+        outputTemplate:
+            "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} " +
+            "[{Level:u3}] " +
+            "[TraceId:{TraceId}] " +
+            "[SpanId:{SpanId}] " +
+            "{SourceContext}{NewLine}" +
+            "    {Message:lj}{NewLine}{Exception}"
+    )
     .WriteTo.File(
         path: Path.Combine(
             AppContext.BaseDirectory,
@@ -33,7 +43,10 @@ Log.Logger = new LoggerConfiguration()
         retainedFileCountLimit: 7,
         outputTemplate:
             "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} " +
-            "[{Level:u3}] {SourceContext}{NewLine}" +
+            "[{Level:u3}] " +
+            "[TraceId:{TraceId}] " +
+            "[SpanId:{SpanId}] " +
+            "{SourceContext}{NewLine}" +
             "    {Message:lj}{NewLine}{Exception}"
     )
     .CreateLogger();
@@ -81,18 +94,33 @@ builder.Services.AddTransient<IExameUseCase, ExameUseCase>();
 
 // Health Checks
 builder.Services.AddHealthChecks()
-    // Liveness - verifica se a API esta no ar
     .AddCheck(
         "self",
         () => HealthCheckResult.Healthy(),
         tags: ["live"])
-    // Readiness - verifica a conexao com o Oracle
     .AddOracle(
         connectionString:
             builder.Configuration.GetConnectionString("Oracle") ?? "",
         name: "oracle",
         failureStatus: HealthStatus.Unhealthy,
         tags: ["db"]);
+
+// OpenTelemetry
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracing =>
+    {
+        tracing
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddConsoleExporter();
+    })
+    .WithMetrics(metrics =>
+    {
+        metrics
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddConsoleExporter();
+    });
 
 // Swagger / OpenAPI
 builder.Services.AddEndpointsApiExplorer();
@@ -130,3 +158,5 @@ app.MapHealthChecks("/health/db", new HealthCheckOptions
 });
 
 app.Run();
+
+public partial class Program { }
