@@ -2,7 +2,7 @@
 
 API REST desenvolvida em ASP.NET Core para o projeto Amandaba, uma aplicação voltada ao gerenciamento e acompanhamento da saúde de pets.
 
-A API permite centralizar informações relacionadas aos animais de um tutor, incluindo dados cadastrais, histórico de peso, vacinas, doenças, alergias, medicamentos, consultas e exames.
+A API permite centralizar informações relacionadas aos animais de um tutor, incluindo dados cadastrais, histórico de peso, vacinas, doenças, alergias, medicamentos, consultas, exames e, agora, um plano de cuidados personalizado gerado por Inteligência Artificial.
 
 O projeto utiliza Oracle como banco de dados e Entity Framework Core para acesso aos dados, seguindo uma arquitetura organizada em camadas. Também possui documentação interativa através do Swagger, monitoramento da aplicação, logging estruturado, tracing, métricas e testes automatizados.
 
@@ -23,6 +23,8 @@ O projeto utiliza Oracle como banco de dados e Entity Framework Core para acesso
 - Moq
 - Entity Framework Core InMemory
 - WebApplicationFactory
+- Google Gemini API (IA Generativa / LLM)
+- HttpClient (integração com serviços externos)
 
 ---
 
@@ -37,6 +39,7 @@ Amandaba.API
 │   ├── Interfaces
 │   ├── Mappers
 │   └── UseCases
+│       └── GeminiUseCase.cs
 ├── Domain
 │   ├── Entities
 │   └── Interfaces
@@ -59,6 +62,12 @@ O fluxo principal da aplicação segue:
 
 ```text
 Controller → UseCase → Repository → Entity Framework Core → Oracle
+```
+
+Para a funcionalidade de IA, o fluxo é:
+
+```text
+Controller → UseCase (dados do pet) → GeminiUseCase → API Google Gemini → Controller
 ```
 
 ---
@@ -103,6 +112,10 @@ Permite registrar consultas veterinárias e acompanhar seu status.
 
 Permite registrar exames do pet e acompanhar seu status.
 
+### Plano de Cuidados com IA Generativa (novo)
+
+Gera, sob demanda, um plano de cuidados personalizado para o pet, cruzando dados clínicos reais (medicamentos em uso, alergias e doenças) através de um modelo de linguagem (LLM), auxiliando o tutor a compreender melhor as orientações e reduzindo dúvidas recorrentes na clínica.
+
 ---
 
 # Endpoints
@@ -116,6 +129,7 @@ Permite registrar exames do pet e acompanhar seu status.
 | GET | `/api/pets/{petId}` | Consulta os dados de um pet |
 | PUT | `/api/pets/{petId}` | Atualiza os dados cadastrais do pet |
 | PATCH | `/api/pets/{petId}/status` | Ativa ou inativa um pet |
+| GET | `/api/pets/{petId}/plano-cuidados` | Gera um plano de cuidados personalizado via IA Generativa |
 
 ## Espécies
 
@@ -232,6 +246,92 @@ RESULTADO_DISPONIVEL
 
 ---
 
+# Integração com IA Generativa (Plano de Cuidados)
+
+## Problema
+
+Tutores frequentemente esquecem as orientações passadas após a consulta ou têm dúvidas sobre como administrar medicamentos e lidar com o quadro clínico do pet (doenças e alergias associadas), o que gera dúvidas recorrentes e sobrecarrega a equipe da clínica.
+
+## Solução
+
+Foi implementado um **Gerador de Plano de Cuidados Personalizado**, que utiliza IA Generativa (LLM) para produzir, sob demanda, um plano de cuidados coerente com o histórico clínico real do pet.
+
+## Abordagem de IA
+
+- **Tipo:** IA Generativa (LLM).
+- **Modelo:** Google Gemini (`gemini-pro`), via API gratuita do Google AI Studio.
+- **Justificativa da escolha do modelo:** o `gemini-pro` apresentou maior estabilidade de fila na camada gratuita em comparação ao `gemini-2.5-flash` durante os testes realizados.
+
+## Configuração
+
+No `appsettings.json` foi adicionada a seção `"Gemini"`, responsável por armazenar a `ApiKey` e a `Url` do endpoint utilizado:
+
+```json
+{
+  "Gemini": {
+    "ApiKey": "SUA_API_KEY",
+    "Url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+  }
+}
+```
+
+> A chave de API não é versionada no repositório e deve ser configurada localmente, seguindo o mesmo princípio adotado para a connection string do Oracle.
+
+No `Program.cs`, foi configurado o `HttpClient` e registrado o serviço responsável pela integração com a IA (`GeminiUseCase` / `GeminiService`).
+
+## Camada de Aplicação — `GeminiUseCase`
+
+Serviço responsável exclusivamente por encapsular a comunicação HTTP com o Google AI Studio, incluindo tratamento de erros que lê e expõe o corpo da resposta (JSON) retornada pelo Google quando a requisição falha (por exemplo, `404 Not Found` ou `503 Service Unavailable`), facilitando o diagnóstico de problemas.
+
+## Camada de Apresentação — `PetsController`
+
+Novo endpoint:
+
+```http
+GET /api/pets/{petId}/plano-cuidados
+```
+
+Documentado no Swagger com `Summary`, `Description` e os `StatusCodes` de resposta.
+
+O endpoint utiliza `_petUseCase.ObterPorId(petId)` para obter os dados reais do pet (nome e espécie), eliminando o uso de dados fixos ("chumbados") no código.
+
+### Cruzamento de dados clínicos
+
+Para montar um prompt mais completo, foi criado um método auxiliar `ObterDadosDinamicos`, que utiliza *Reflection* para buscar, nos respectivos UseCases, o histórico de:
+
+- Medicamentos em uso;
+- Alergias registradas;
+- Doenças e condições de saúde.
+
+Essa abordagem evita acoplamento rígido no construtor do `PetsController`. Os dados relacionais vindos do Oracle (via Entity Framework) são serializados em JSON e injetados dinamicamente no prompt enviado à IA.
+
+O *system prompt* instrui o modelo a atuar como um sistema de apoio veterinário, cruzando ativamente as informações — por exemplo, analisando os medicamentos em uso em conjunto com as alergias ativas — para gerar um plano de cuidados seguro e coerente com o quadro clínico do pet.
+
+## Fluxo de execução
+
+```text
+Requisição HTTP (GET /api/pets/{petId}/plano-cuidados)
+        ↓
+PetsController
+        ↓
+PetUseCase (dados cadastrais do pet)
+        ↓
+ObterDadosDinamicos (Reflection → Medicamentos, Alergias, Doenças)
+        ↓
+GeminiUseCase (monta prompt e chama a API do Google)
+        ↓
+API Google Gemini
+        ↓
+Resposta processada e retornada ao tutor
+```
+
+## Validação
+
+- O fluxo completo (Controller → UseCase → API externa → Controller) foi validado via Swagger em ambiente local.
+- Os logs estruturados (Serilog/OpenTelemetry) confirmam o tempo de resposta da chamada à API do Google e o correto funcionamento do `HttpClient`, podendo ser correlacionados pelo `TraceId`/`SpanId`.
+
+---
+
 # Monitoramento e Observabilidade
 
 A aplicação possui recursos de monitoramento e observabilidade implementados através de Health Checks, Serilog e OpenTelemetry.
@@ -285,7 +385,7 @@ São utilizados os níveis:
 - `Warning`
 - `Error`
 
-Os logs também incluem `TraceId` e `SpanId`, permitindo correlacionar as informações registradas com o tracing da requisição.
+Os logs também incluem `TraceId` e `SpanId`, permitindo correlacionar as informações registradas com o tracing da requisição — inclusive as chamadas externas realizadas à API do Google Gemini.
 
 ## Tracing e Métricas
 
@@ -294,7 +394,7 @@ A aplicação utiliza OpenTelemetry para tracing e coleta de métricas.
 Foram configuradas instrumentações para:
 
 - ASP.NET Core;
-- requisições HTTP realizadas através de HttpClient.
+- requisições HTTP realizadas através de HttpClient (incluindo as chamadas à API do Google Gemini).
 
 Os traces permitem acompanhar informações como:
 
@@ -397,6 +497,7 @@ Para executar o projeto é necessário possuir:
 
 - .NET 8 SDK;
 - acesso a um banco Oracle compatível com a estrutura utilizada pelo projeto;
+- uma chave de API do Google Gemini (Google AI Studio), para a funcionalidade de plano de cuidados;
 - Git;
 - Visual Studio ou outra IDE compatível com projetos ASP.NET Core.
 
@@ -436,7 +537,20 @@ Exemplo de estrutura:
 
 Substitua os valores de exemplo pelas credenciais e pelo Data Source correspondentes ao ambiente Oracle utilizado.
 
-## 4. Executar a API
+## 4. Configurar a integração com o Google Gemini
+
+Da mesma forma, configure a seção `Gemini` no ambiente local:
+
+```json
+{
+  "Gemini": {
+    "ApiKey": "SUA_API_KEY",
+    "Url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+  }
+}
+```
+
+## 5. Executar a API
 
 Na pasta do projeto da API:
 
@@ -466,7 +580,7 @@ https://localhost:{porta}/swagger
 
 A porta utilizada deve ser consultada no console durante a inicialização da aplicação.
 
-Através do Swagger é possível visualizar e testar os endpoints disponibilizados pela API.
+Através do Swagger é possível visualizar e testar os endpoints disponibilizados pela API, incluindo o endpoint de geração do plano de cuidados com IA.
 
 ---
 
@@ -487,4 +601,4 @@ A API utiliza os principais códigos HTTP de acordo com o resultado das operaç�
 
 # Projeto Acadêmico
 
-Projeto desenvolvido como parte do Challenge da FIAP para a disciplina **Advanced Business Development with .NET**.
+Projeto desenvolvido como parte do Challenge da FIAP para a disciplina **Advanced Business Development with .NET**, com a funcionalidade de IA Generativa desenvolvida para a disciplina **Disruptive Architectures: IoT, IoB & Generative IA**.
