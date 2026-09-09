@@ -1,4 +1,5 @@
 using Amandaba.API.Application.Interfaces;
+using Amandaba.API.Application.UseCases;
 using Amandaba.API.Domain.Interfaces;
 using Amandaba.Application.Interfaces;
 using Amandaba.Application.UseCases;
@@ -121,6 +122,8 @@ builder.Services.AddOpenTelemetry()
             .AddHttpClientInstrumentation()
             .AddConsoleExporter();
     });
+    
+builder.Services.AddHttpClient<GeminiUseCase>();
 
 // Swagger / OpenAPI
 builder.Services.AddEndpointsApiExplorer();
