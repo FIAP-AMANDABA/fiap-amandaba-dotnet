@@ -28,8 +28,13 @@ jobs:
       - name: Build
         run: dotnet build ${{ env.PROJECT_PATH }} --configuration Release --no-restore
 
-      - name: Publish
+      - name: Publish (Corrigido com o PROJECT_PATH)
         run: dotnet publish ${{ env.PROJECT_PATH }} -c Release -o ./publish
+
+      - name: Zipar os arquivos para Deploy
+        run: |
+          cd publish
+          zip -r ../app.zip .
 
       - name: Login na Azure
         uses: azure/login@v2
@@ -45,10 +50,12 @@ jobs:
               ConnectionStrings__Oracle="User Id=${{ secrets.ORACLE_USER }};Password=${{ secrets.ORACLE_PASSWORD }};Data Source=oracle.fiap.com.br:1521/ORCL;"
 
       - name: Deploy no Azure Web App
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: ${{ env.WEBAPP_NAME }}
-          package: ./publish
+        run: |
+          az webapp deploy \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$WEBAPP_NAME" \
+            --src-path app.zip \
+            --type zip
 
       - name: Logout da Azure
         run: az logout
