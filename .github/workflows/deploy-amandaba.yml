@@ -28,7 +28,7 @@ jobs:
       - name: Build
         run: dotnet build ${{ env.PROJECT_PATH }} --configuration Release --no-restore
 
-      - name: Publish (Corrigido com o PROJECT_PATH)
+      - name: Publish
         run: dotnet publish ${{ env.PROJECT_PATH }} -c Release -o ./publish
 
       - name: Zipar os arquivos para Deploy
@@ -41,15 +41,16 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Configurar Connection String do Oracle no App Service
+      - name: Configurar App Settings e Desativar Build no Servidor
         run: |
           az webapp config appsettings set \
             --resource-group "$RESOURCE_GROUP" \
             --name "$WEBAPP_NAME" \
             --settings \
-              ConnectionStrings__Oracle="User Id=${{ secrets.ORACLE_USER }};Password=${{ secrets.ORACLE_PASSWORD }};Data Source=oracle.fiap.com.br:1521/ORCL;"
+              ConnectionStrings__Oracle="User Id=${{ secrets.ORACLE_USER }};Password=${{ secrets.ORACLE_PASSWORD }};Data Source=oracle.fiap.com.br:1521/ORCL;" \
+              SCM_DO_BUILD_DURING_DEPLOYMENT="false"
 
-      - name: Deploy no Azure Web App
+      - name: Deploy no Azure Web App (Via CLI em formato Zip)
         run: |
           az webapp deploy \
             --resource-group "$RESOURCE_GROUP" \
