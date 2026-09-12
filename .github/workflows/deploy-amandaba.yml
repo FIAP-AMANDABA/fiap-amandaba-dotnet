@@ -13,6 +13,7 @@ env:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
@@ -48,6 +49,7 @@ jobs:
             --name "$WEBAPP_NAME" \
             --settings \
               ConnectionStrings__Oracle="User Id=${{ secrets.ORACLE_USER }};Password=${{ secrets.ORACLE_PASSWORD }};Data Source=oracle.fiap.com.br:1521/ORCL;" \
+              ApplicationInsights__ConnectionString="${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}" \
               SCM_DO_BUILD_DURING_DEPLOYMENT="false"
 
       - name: Deploy no Azure Web App (Via config-zip)
