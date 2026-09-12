@@ -56,7 +56,6 @@ builder.Services.AddSerilog();
 
 // Controllers
 builder.Services.AddControllers();
-
 // Entity Framework + Oracle
 builder.Services.AddDbContext<ApplicationContext>(options =>
 {
@@ -134,6 +133,16 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+app.UseCors("AllowAll");
+
+//CORS
+
+app.UseCors(policy =>
+{
+    policy.AllowAnyOrigin()
+          .AllowAnyMethod()
+          .AllowAnyHeader();
+});
 
 // Swagger
 app.UseSwagger();
