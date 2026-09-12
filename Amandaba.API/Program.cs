@@ -6,11 +6,11 @@ using Amandaba.Application.UseCases;
 using Amandaba.Domain.Interfaces;
 using Amandaba.Infrastructure.Data;
 using Amandaba.Infrastructure.Data.Repositories;
+using Azure.Monitor.OpenTelemetry.AspNetCore;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Trace;
+using OpenTelemetry;
 using Oracle.EntityFrameworkCore;
 using Serilog;
 using Serilog.Events;
@@ -56,6 +56,7 @@ builder.Services.AddSerilog();
 
 // Controllers
 builder.Services.AddControllers();
+
 // Entity Framework + Oracle
 builder.Services.AddDbContext<ApplicationContext>(options =>
 {
@@ -105,23 +106,15 @@ builder.Services.AddHealthChecks()
         failureStatus: HealthStatus.Unhealthy,
         tags: ["db"]);
 
-// OpenTelemetry
+// Application Insights
 builder.Services.AddOpenTelemetry()
-    .WithTracing(tracing =>
+    .UseAzureMonitor(options =>
     {
-        tracing
-            .AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation()
-            .AddConsoleExporter();
-    })
-    .WithMetrics(metrics =>
-    {
-        metrics
-            .AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation()
-            .AddConsoleExporter();
+        options.ConnectionString =
+            builder.Configuration["ApplicationInsights:ConnectionString"];
     });
-    
+
+// Gemini
 builder.Services.AddHttpClient<GeminiUseCase>();
 
 // Swagger / OpenAPI
@@ -133,10 +126,10 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
 app.UseCors("AllowAll");
 
-//CORS
-
+// CORS
 app.UseCors(policy =>
 {
     policy.AllowAnyOrigin()

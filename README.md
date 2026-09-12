@@ -19,6 +19,8 @@ O projeto utiliza Oracle como banco de dados e Entity Framework Core para acesso
 - Serilog
 - Health Checks
 - OpenTelemetry
+- Azure Monitor
+- Application Insights
 - xUnit
 - Moq
 - Entity Framework Core InMemory
@@ -328,13 +330,14 @@ Resposta processada e retornada ao tutor
 ## Validação
 
 - O fluxo completo (Controller → UseCase → API externa → Controller) foi validado via Swagger em ambiente local.
-- Os logs estruturados (Serilog/OpenTelemetry) confirmam o tempo de resposta da chamada à API do Google e o correto funcionamento do `HttpClient`, podendo ser correlacionados pelo `TraceId`/`SpanId`.
+- Os logs estruturados com Serilog incluem `TraceId` e `SpanId`, permitindo correlacionar as requisições da aplicação.
+- As requisições e chamadas HTTP instrumentadas podem ser acompanhadas através do Azure Monitor/Application Insights.
 
 ---
 
 # Monitoramento e Observabilidade
 
-A aplicação possui recursos de monitoramento e observabilidade implementados através de Health Checks, Serilog e OpenTelemetry.
+A aplicação possui recursos de monitoramento e observabilidade implementados através de Health Checks, Serilog, OpenTelemetry, Azure Monitor e Application Insights.
 
 ## Health Checks
 
@@ -385,16 +388,36 @@ São utilizados os níveis:
 - `Warning`
 - `Error`
 
-Os logs também incluem `TraceId` e `SpanId`, permitindo correlacionar as informações registradas com o tracing da requisição — inclusive as chamadas externas realizadas à API do Google Gemini.
+Os logs também incluem `TraceId` e `SpanId`, permitindo correlacionar as informações registradas com o tracing das requisições.
 
 ## Tracing e Métricas
 
-A aplicação utiliza OpenTelemetry para tracing e coleta de métricas.
+A aplicação utiliza **OpenTelemetry integrado ao Azure Monitor/Application Insights** para tracing e coleta de métricas.
 
-Foram configuradas instrumentações para:
+A configuração é realizada no `Program.cs` através do Azure Monitor:
 
-- ASP.NET Core;
-- requisições HTTP realizadas através de HttpClient (incluindo as chamadas à API do Google Gemini).
+```csharp
+builder.Services.AddOpenTelemetry()
+    .UseAzureMonitor(options =>
+    {
+        options.ConnectionString =
+            builder.Configuration["ApplicationInsights:ConnectionString"];
+    });
+```
+
+A Connection String do Application Insights é configurada no ambiente local através do `appsettings.json`:
+
+```json
+{
+  "ApplicationInsights": {
+    "ConnectionString": "SUA_CONNECTION_STRING"
+  }
+}
+```
+
+> A Connection String do Application Insights deve ser configurada de acordo com o recurso criado no Azure.
+
+A telemetria coletada é enviada ao **Application Insights**, permitindo acompanhar as requisições da API e informações de desempenho.
 
 Os traces permitem acompanhar informações como:
 
@@ -405,9 +428,18 @@ Os traces permitem acompanhar informações como:
 - status da resposta;
 - duração da requisição.
 
-As métricas HTTP permitem acompanhar informações de desempenho das requisições, incluindo duração e status das respostas.
+No Application Insights é possível acompanhar, entre outras informações:
 
-Na configuração atual, traces e métricas são exportados para o console da aplicação através do OpenTelemetry Console Exporter.
+- quantidade de requisições recebidas;
+- requisições com falha;
+- tempo de resposta do servidor;
+- traces das requisições;
+- duração das operações;
+- status das requisições.
+
+A correlação entre os logs locais e a telemetria do Azure pode ser realizada através do `TraceId`, permitindo acompanhar uma mesma requisição entre os registros da aplicação e o Application Insights.
+
+O monitoramento pode ser realizado no recurso do Application Insights no Portal do Azure, através das áreas de **Search**, **Performance**, **Failures**, **Live Metrics** e **Application Map**.
 
 ---
 
@@ -498,6 +530,7 @@ Para executar o projeto é necessário possuir:
 - .NET 8 SDK;
 - acesso a um banco Oracle compatível com a estrutura utilizada pelo projeto;
 - uma chave de API do Google Gemini (Google AI Studio), para a funcionalidade de plano de cuidados;
+- uma Connection String válida de um recurso Application Insights no Azure, para envio da telemetria;
 - Git;
 - Visual Studio ou outra IDE compatível com projetos ASP.NET Core.
 
@@ -550,7 +583,21 @@ Da mesma forma, configure a seção `Gemini` no ambiente local:
 }
 ```
 
-## 5. Executar a API
+## 5. Configurar o Application Insights
+
+Para habilitar o envio de tracing e métricas ao Azure, configure a Connection String do recurso Application Insights:
+
+```json
+{
+  "ApplicationInsights": {
+    "ConnectionString": "SUA_CONNECTION_STRING"
+  }
+}
+```
+
+A Connection String pode ser obtida na página **Overview** do recurso Application Insights no Portal do Azure.
+
+## 6. Executar a API
 
 Na pasta do projeto da API:
 
