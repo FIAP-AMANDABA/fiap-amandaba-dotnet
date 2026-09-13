@@ -81,6 +81,7 @@ builder.Services.AddTransient<IAlergiaRepository, AlergiaRepository>();
 builder.Services.AddTransient<IMedicamentoRepository, MedicamentoRepository>();
 builder.Services.AddTransient<IConsultaRepository, ConsultaRepository>();
 builder.Services.AddTransient<IExameRepository, ExameRepository>();
+builder.Services.AddTransient<ITutorRepository, TutorRepository>();
 
 // UseCases
 builder.Services.AddTransient<IPetUseCase, PetUseCase>();
@@ -92,6 +93,7 @@ builder.Services.AddTransient<IAlergiaUseCase, AlergiaUseCase>();
 builder.Services.AddTransient<IMedicamentoUseCase, MedicamentoUseCase>();
 builder.Services.AddTransient<IConsultaUseCase, ConsultaUseCase>();
 builder.Services.AddTransient<IExameUseCase, ExameUseCase>();
+builder.Services.AddTransient<ITutorUseCase, TutorUseCase>();
 
 // Health Checks
 builder.Services.AddHealthChecks()
