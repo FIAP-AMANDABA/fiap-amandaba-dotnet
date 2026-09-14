@@ -1,4 +1,4 @@
-using Amandaba.API.Application.Interfaces;
+using Amandaba.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Amandaba.Presentation.Controllers
