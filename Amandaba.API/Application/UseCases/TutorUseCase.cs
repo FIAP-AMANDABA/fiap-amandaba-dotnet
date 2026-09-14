@@ -1,6 +1,7 @@
 using Amandaba.API.Domain.Interfaces;
 using Amandaba.Application.Dtos.Tutores;
 using Amandaba.Application.Interfaces;
+using Amandaba.Domain.Entities;
 
 namespace Amandaba.Application.UseCases
 {
@@ -15,7 +16,16 @@ namespace Amandaba.Application.UseCases
 
         public TutorResponseDto? ObterPorEmail(string email)
         {
-            var tutor = _tutorRepository.ObterPorEmail(email);
+            return Mapear(_tutorRepository.ObterPorEmail(email));
+        }
+
+        public TutorResponseDto? ObterPorIdUsuario(decimal idUsuario)
+        {
+            return Mapear(_tutorRepository.ObterPorIdUsuario(idUsuario));
+        }
+
+        private static TutorResponseDto? Mapear(TutorEntity? tutor)
+        {
             if (tutor is null) return null;
 
             return new TutorResponseDto

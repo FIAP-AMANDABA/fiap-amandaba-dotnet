@@ -5,5 +5,6 @@ namespace Amandaba.Application.Interfaces
     public interface ITutorUseCase
     {
         TutorResponseDto? ObterPorEmail(string email);
+        TutorResponseDto? ObterPorIdUsuario(decimal idUsuario);
     }
 }

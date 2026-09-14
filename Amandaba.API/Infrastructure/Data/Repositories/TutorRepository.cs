@@ -22,12 +22,31 @@ namespace Amandaba.Infrastructure.Data.Repositories
 			if (tutor is not null)
 				return tutor;
 
-			var usuario = _context.Usuarios
-				.FirstOrDefault(u => u.Email == email);
-
+			var usuario = _context.Usuarios.FirstOrDefault(u => u.Email == email);
 			if (usuario is null)
 				return null;
 
+			return CriarTutorParaUsuario(usuario);
+		}
+
+		public TutorEntity? ObterPorIdUsuario(decimal idUsuario)
+		{
+			var tutor = _context.Tutores
+				.Include(t => t.Usuario)
+				.FirstOrDefault(t => t.IdUsuario == idUsuario);
+
+			if (tutor is not null)
+				return tutor;
+
+			var usuario = _context.Usuarios.Find(idUsuario);
+			if (usuario is null)
+				return null;
+
+			return CriarTutorParaUsuario(usuario);
+		}
+
+		private TutorEntity CriarTutorParaUsuario(UsuarioEntity usuario)
+		{
 			var novoTutor = new TutorEntity { IdUsuario = usuario.IdUsuario };
 			_context.Tutores.Add(novoTutor);
 			_context.SaveChanges();

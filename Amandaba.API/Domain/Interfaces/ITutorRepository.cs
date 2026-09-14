@@ -5,5 +5,6 @@ namespace Amandaba.API.Domain.Interfaces
     public interface ITutorRepository
     {
         TutorEntity? ObterPorEmail(string email);
+        TutorEntity? ObterPorIdUsuario(decimal idUsuario);
     }
 }

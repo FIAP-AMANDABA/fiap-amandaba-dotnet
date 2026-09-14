@@ -18,10 +18,17 @@ namespace Amandaba.Presentation.Controllers
 		public IActionResult ObterPorEmail(string email)
 		{
 			var tutor = _tutorUseCase.ObterPorEmail(email);
-
 			if (tutor is null)
 				return NotFound(new { mensagem = "Tutor não encontrado." });
+			return Ok(tutor);
+		}
 
+		[HttpGet("by-usuario/{idUsuario}")]
+		public IActionResult ObterPorIdUsuario(decimal idUsuario)
+		{
+			var tutor = _tutorUseCase.ObterPorIdUsuario(idUsuario);
+			if (tutor is null)
+				return NotFound(new { mensagem = "Tutor não encontrado." });
 			return Ok(tutor);
 		}
 	}
